@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1beta1"
 )
 
 const (
@@ -27,6 +29,7 @@ type KubernetesService interface {
 	GetUser(context.Context, string) (*KubernetesClusterUser, *Response, error)
 	GetUpgrades(context.Context, string) ([]*KubernetesVersion, *Response, error)
 	GetKubeConfig(context.Context, string) (*KubernetesClusterConfig, *Response, error)
+	GetKubeConfigExecCredential(context.Context, string) (*clientauthentication.ExecCredential, *Response, error)
 	List(context.Context, *ListOptions) ([]*KubernetesCluster, *Response, error)
 	Update(context.Context, string, *KubernetesClusterUpdateRequest) (*KubernetesCluster, *Response, error)
 	Upgrade(context.Context, string, *KubernetesClusterUpgradeRequest) (*Response, error)
@@ -343,6 +346,10 @@ type kubernetesClusterRoot struct {
 	Cluster *KubernetesCluster `json:"kubernetes_cluster,omitempty"`
 }
 
+type kubernetesClusterKubeconfigExecCredentialRoot struct {
+	ExecCredential *clientauthentication.ExecCredential `json:"kubernetes_cluster_kubeconfig_exec_credential,omitempty"`
+}
+
 type kubernetesClusterUserRoot struct {
 	User *KubernetesClusterUser `json:"kubernetes_cluster_user,omitempty"`
 }
@@ -478,6 +485,21 @@ func (svc *KubernetesServiceOp) GetKubeConfig(ctx context.Context, clusterID str
 		KubeconfigYAML: configBytes.Bytes(),
 	}
 	return res, resp, nil
+}
+
+// GetKubeConfigExecCredential returns a Kubernetes config ExecCredential object for the specified cluster.
+func (svc *KubernetesServiceOp) GetKubeConfigExecCredential(ctx context.Context, clusterID string) (*clientauthentication.ExecCredential, *Response, error) {
+	path := fmt.Sprintf("%s/%s/kubeconfig/exec-credential", kubernetesClustersPath, clusterID)
+	req, err := svc.client.NewRequest(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	root := new(kubernetesClusterKubeconfigExecCredentialRoot)
+	resp, err := svc.client.Do(ctx, req, root)
+	if err != nil {
+		return nil, resp, err
+	}
+	return root.ExecCredential, resp, nil
 }
 
 // Update updates a Kubernetes cluster's properties.

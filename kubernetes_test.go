@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1beta1"
 )
 
 func TestKubernetesClusters_ListClusters(t *testing.T) {
@@ -371,6 +373,45 @@ func TestKubernetesClusters_GetKubeConfig(t *testing.T) {
 	got, _, err := kubeSvc.GetKubeConfig(ctx, "deadbeef-dead-4aa5-beef-deadbeef347d")
 	require.NoError(t, err)
 	require.Equal(t, blob, got.KubeconfigYAML)
+}
+
+func TestKubernetesClusters_GetKubeConfigExecCredential(t *testing.T) {
+	setup()
+	defer teardown()
+
+	kubeSvc := client.Kubernetes
+	timestamp, err := time.Parse(time.RFC3339, "2014-11-12T11:45:26.371Z")
+	require.NoError(t, err)
+	k8sTimestamp := &metav1.Time{Time: timestamp}
+	want := &clientauthentication.ExecCredential{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ExecCredential",
+			APIVersion: clientauthentication.SchemeGroupVersion.String(),
+		},
+		Status: &clientauthentication.ExecCredentialStatus{
+			ExpirationTimestamp: k8sTimestamp,
+			Token:               "secret",
+		},
+	}
+	jBlob := `
+{
+	"kubernetes_cluster_kubeconfig_exec_credential": {
+		"kind": "ExecCredential",
+		"apiVersion": "client.authentication.k8s.io/v1beta1",
+		"status": {
+			"expirationTimestamp": "2014-11-12T11:45:26.371Z",
+			"token": "secret"
+		}
+	}
+}`
+	mux.HandleFunc("/v2/kubernetes/clusters/deadbeef-dead-4aa5-beef-deadbeef347d/kubeconfig/exec-credential", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, http.MethodGet)
+		fmt.Fprint(w, jBlob)
+	})
+	got, _, err := kubeSvc.GetKubeConfigExecCredential(ctx, "deadbeef-dead-4aa5-beef-deadbeef347d")
+	require.NoError(t, err)
+	got.Status.ExpirationTimestamp.Time = got.Status.ExpirationTimestamp.UTC()
+	require.Equal(t, want, got)
 }
 
 func TestKubernetesClusters_GetUpgrades(t *testing.T) {
