@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-server
+  labels:
+    app: e2e-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e2e-server
+  template:
+    metadata:
+      labels:
+        app: e2e-server
+    spec:
+      containers:
+        - name: e2e-server
+          image: nanzhong/godo
+          command:
+          - /godo/e2e
+          ports:
+          - containerPort: 80
+          env:
+          - name: ADDR
+            value: "0.0.0.0:80"
+          - name: TEMPLATES_PATH
+            value: "/godo/test/e2e/framework/server/templates"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: e2e-server
+  labels:
+     app: e2e-server  
+spec:
+  type: LoadBalancer
+  selector:
+    app: e2e-server
+  ports:
+  - name: e2e-server
+    protocol: TCP
+    port: 80
+    targetPort: 80

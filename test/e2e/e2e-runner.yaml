@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-runner
+  labels:
+    app: e2e-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e2e-runner
+  template:
+    metadata:
+      labels:
+        app: e2e-runner
+    spec:
+      containers:
+        - name: e2e-runner
+          image: nanzhong/godo
+          command:
+          - /bin/sh
+          - "-c"
+          - while true; do /godo/test/e2e/run.sh; done; exit 0
+          env:
+          - name: E2E_SERVER_ADDR
+            value: "e2e-server.default.svc.cluster.local:80"
+          - name: PUSHGATEWAY_ADDR
+            value: "pushgateway.default.svc.cluster.local:9091"            
+          - name: ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: e2e-runner-access-token
+                key: access-token

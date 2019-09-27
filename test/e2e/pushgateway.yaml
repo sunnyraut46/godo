@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pushgateway
+  labels:
+    app: pushgateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pushgateway
+  template:
+    metadata:
+      labels:
+        app: pushgateway
+    spec:
+      containers:
+      - name: pushgateway
+        image: prom/pushgateway
+        ports:
+        - containerPort: 9091
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: pushgateway
+  labels:
+     app: pushgateway  
+spec:
+  type: LoadBalancer
+  selector:
+    app: pushgateway
+  ports:
+  - name: pushgateway
+    protocol: TCP
+    port: 9091
+    targetPort: 9091
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pushgateway
+  labels:
+    release: prometheus-operator
+spec:
+  endpoints:
+  - honorLabels: true
+    interval: 5s
+    port: pushgateway
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      app: pushgateway

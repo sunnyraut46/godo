@@ -1,0 +1,48 @@
+{{define "head"}}<meta http-equiv="refresh" content="60">{{end}}
+
+{{range  .Results}}
+<div class="row my-4">
+    <div class="col-2">
+      <p><strong>{{.ID}}</strong></p>
+      <p>{{.RanAt | formatTime}}</p>
+      <p><small>{{.Duration | formatDuration}}</small></p>
+      <span class="badge badge-pill {{if .TimedOut}}badge-warning{{else}}{{if .Running}}badge-primary{{else}}{{if .Failed}}badge-danger{{else}}badge-success{{end}}{{end}}{{end}}">
+        {{if .TimedOut}}
+        Timed Out
+        {{else}}
+        {{if .Running}}Running{{else}}{{if .Failed}}Fail{{else}}Pass{{end}}{{end}}
+        {{end}}
+      </span>
+      <br>
+      <button class="btn btn-secondary btn-sm w-auto mt-4" type="button" data-toggle="collapse" data-target="#collapse-logs-{{.ID}}" aria-expanded="false" aria-controls="collapse-logs-{{.ID}}">Logs</button>
+    </div>
+    <div class="col">
+      {{range .Tests}}
+      <button type="button"
+              class="btn btn-sm {{if .TimedOut}}btn-warning{{else}}{{if .Running}}btn-primary{{else}}{{if .Failed}}btn-danger{{else}}btn-success{{end}}{{end}}"{{end}}
+              data-toggle="popover" title="{{.Name}}"
+              data-html="true" data-content="<small><strong>Status</strong>: {{if .TimedOut}}Timed Out{{else}}{{if .Running}}Running{{else}}{{if .Failed}}Fail{{else}}Pass{{end}}{{end}}{{end}}<br><strong>Duration</strong>: {{.Duration | formatDuration}}</small>">
+        {{if and (not .TimedOut) .Running}}<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{end}}{{.Name}}
+      </button>
+      {{end}}
+    </div>
+</div>
+<div class="collapse" id="collapse-logs-{{.ID}}">
+  <div class="card card-body">
+    {{if eq (len .Logs) 0}}
+    <div class="d-flex align-items-center">
+      <strong>Waiting to receive logs...</strong>
+      <div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>
+    </div>
+    {{else}}
+    <pre>{{ .Logs | formatLogs}}</pre>
+    {{end}}
+  </div>
+</div>
+<hr class="my-4">
+{{else}}
+<div class="jumbotron">
+  <h1 class="display-4">No test results yet</h1>
+  <p class="lead">Kick off a test run and publish the results...</p>
+</div>
+{{end}}
