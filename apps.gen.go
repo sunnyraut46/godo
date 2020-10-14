@@ -142,6 +142,7 @@ type AppServiceSpec struct {
 	// A list of HTTP routes that should be routed to this component.
 	Routes      []*AppRouteSpec            `json:"routes,omitempty"`
 	HealthCheck *AppServiceSpecHealthCheck `json:"health_check,omitempty"`
+	Cors        *CorsPolicy                `json:"cors,omitempty"`
 }
 
 // AppServiceSpecHealthCheck struct for AppServiceSpecHealthCheck
@@ -205,6 +206,7 @@ type AppStaticSiteSpec struct {
 	Envs []*AppVariableDefinition `json:"envs,omitempty"`
 	// A list of HTTP routes that should be routed to this component.
 	Routes []*AppRouteSpec `json:"routes,omitempty"`
+	Cors   *CorsPolicy     `json:"cors,omitempty"`
 }
 
 // AppVariableDefinition struct for AppVariableDefinition
@@ -238,6 +240,12 @@ type AppWorkerSpec struct {
 	// The instance size to use for this component.
 	InstanceSizeSlug string `json:"instance_size_slug,omitempty"`
 	InstanceCount    int64  `json:"instance_count,omitempty"`
+}
+
+// CorsPolicy struct for CorsPolicy
+type CorsPolicy struct {
+	// The set of CORS allowed origins.
+	AllowOrigins []*StringMatch `json:"allow_origins,omitempty"`
 }
 
 // Deployment struct for Deployment
@@ -388,6 +396,16 @@ type AppRegion struct {
 type DeploymentProgressStepReason struct {
 	Code    string `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
+}
+
+// StringMatch struct for StringMatch
+type StringMatch struct {
+	// Exact string match. Only 1 of `exact`, `prefix`, or `regex` must be set.
+	Exact string `json:"exact,omitempty"`
+	// Prefix-based match. Only 1 of `exact`, `prefix`, or `regex` must be set.
+	Prefix string `json:"prefix,omitempty"`
+	// RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax). Only 1 of `exact`, `prefix`, or `regex` must be set.
+	Regex string `json:"regex,omitempty"`
 }
 
 // AppTier struct for AppTier
